@@ -41,10 +41,18 @@ def update_product_rating(product):
         product.save()
 
 
+def get_request_data(request):
+    try:
+        return json.loads(request.body)
+    except (json.JSONDecodeError, TypeError):
+        return request.data
+
+
 @api_view(['POST'])
 def sign_in(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
+    data = get_request_data(request)
+    username = data.get('username')
+    password = data.get('password')
     user = authenticate(request, username=username, password=password)
     if user is not None:
         login(request, user)
@@ -54,9 +62,10 @@ def sign_in(request):
 
 @api_view(['POST'])
 def sign_up(request):
-    name = request.data.get('name')
-    username = request.data.get('username')
-    password = request.data.get('password')
+    data = get_request_data(request)
+    name = data.get('name')
+    username = data.get('username')
+    password = data.get('password')
     if User.objects.filter(username=username).exists():
         return Response({'error': 'User already exists'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     user = User.objects.create_user(username=username, password=password)

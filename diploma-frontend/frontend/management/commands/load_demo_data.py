@@ -13,12 +13,25 @@ class Command(BaseCommand):
     help = 'Load demo data for the store'
 
     def handle(self, *args, **options):
+        self.clean_data()
         self.create_users()
         self.create_categories()
         self.create_tags()
         self.create_products()
         self.create_delivery_settings()
         self.stdout.write(self.style.SUCCESS('Demo data loaded successfully!'))
+
+    def clean_data(self):
+        Banner.objects.all().delete()
+        Sale.objects.all().delete()
+        Review.objects.all().delete()
+        ProductSpecification.objects.all().delete()
+        ProductTag.objects.all().delete()
+        ProductImage.objects.all().delete()
+        Product.objects.all().delete()
+        Category.objects.all().delete()
+        Tag.objects.all().delete()
+        self.stdout.write('  Cleared old data')
 
     def create_delivery_settings(self):
         if not DeliverySettings.objects.exists():
@@ -49,14 +62,7 @@ class Command(BaseCommand):
                 ('Смартфоны',),
                 ('Ноутбуки',),
                 ('Наушники',),
-            ]),
-            ('Одежда', None, [
-                ('Мужская',),
-                ('Женская',),
-            ]),
-            ('Дом и сад', None, [
-                ('Мебель',),
-                ('Посуда',),
+                ('Умные часы',),
             ]),
         ]
 
@@ -92,13 +98,7 @@ class Command(BaseCommand):
             {'title': 'AirPods Pro 2', 'category': 'Наушники', 'price': 24990, 'desc': 'Беспроводные наушники с шумоподавлением'},
             {'title': 'Sony WH-1000XM5', 'category': 'Наушники', 'price': 34990, 'desc': 'Лучшие наушники с шумоподавлением'},
             {'title': 'JBL Tune 720BT', 'category': 'Наушники', 'price': 4990, 'desc': 'Доступные беспроводные наушники'},
-            {'title': 'Кожаная куртка', 'category': 'Мужская', 'price': 15990, 'desc': 'Натуральная кожа, чёрный цвет'},
-            {'title': 'Джинсы классические', 'category': 'Мужская', 'price': 4990, 'desc': 'Классические джинсы синего цвета'},
-            {'title': 'Платье вечернее', 'category': 'Женская', 'price': 12990, 'desc': 'Элегантное вечернее платье'},
-            {'title': 'Пальто зимнее', 'category': 'Женская', 'price': 24990, 'desc': 'Тёплое зимнее пальто'},
-            {'title': 'Диван угловой', 'category': 'Мебель', 'price': 89990, 'desc': 'Удобный угловой диван'},
-            {'title': 'Стол письменный', 'category': 'Мебель', 'price': 15990, 'desc': 'Письменный стол из дерева'},
-            {'title': 'Набор посуды', 'category': 'Посуда', 'price': 7990, 'desc': 'Набор из 24 предметов'},
+            {'title': 'Apple Watch Ultra 2', 'category': 'Умные часы', 'price': 79990, 'desc': 'Прочные умные часы для экстремальных условий'},
         ]
 
         now = timezone.now()

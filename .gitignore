@@ -1,2 +1,9 @@
-
+venv/
+*.pyc
+__pycache__/
+db.sqlite3
+static/
+media/
+dist/
+*.egg-info/
 .DS_Store

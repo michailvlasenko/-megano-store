@@ -44,7 +44,9 @@ def update_product_rating(product):
 def get_request_data(request):
     try:
         return json.loads(request.body)
-    except (json.JSONDecodeError, TypeError):
+    except json.JSONDecodeError:
+        return request.data
+    except Exception:
         return request.data
 
 
@@ -193,7 +195,8 @@ def product_review(request, id):
         product = Product.objects.get(id=id)
     except Product.DoesNotExist:
         return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
-    serializer = ReviewSerializer(data=request.data)
+    data = get_request_data(request)
+    serializer = ReviewSerializer(data=data)
     if serializer.is_valid():
         serializer.save(product=product)
         update_product_rating(product)
@@ -214,8 +217,9 @@ def basket(request):
         serializer = CartSerializer(items, many=True, context={'request': request})
         return Response(serializer.data)
 
-    product_id = request.data.get('id')
-    count = request.data.get('count', 1)
+    data = get_request_data(request)
+    product_id = data.get('id')
+    count = data.get('count', 1)
 
     if request.method == 'POST':
         item = get_or_create_cart_item(request.user, session_key, product_id)
@@ -257,14 +261,14 @@ def orders(request):
 
         order = Order.objects.create(
             user=request.user if request.user.is_authenticated else None,
-            full_name=request.data.get('fullName', ''),
-            email=request.data.get('email', ''),
-            phone=request.data.get('phone', ''),
-            delivery_type=request.data.get('deliveryType', 'free'),
-            payment_type=request.data.get('paymentType', 'online_card'),
-            city=request.data.get('city', ''),
-            address=request.data.get('address', ''),
-            comment=request.data.get('comment', ''),
+            full_name='',
+            email='',
+            phone='',
+            delivery_type='free',
+            payment_type='online_card',
+            city='',
+            address='',
+            comment='',
         )
 
         total = Decimal('0.00')
@@ -278,13 +282,6 @@ def orders(request):
                 count=cart_item.count,
             )
             total += price
-
-        delivery_settings = DeliverySettings.objects.first()
-        if delivery_settings:
-            if order.delivery_type == 'express':
-                total += delivery_settings.express_delivery_cost
-            elif total < delivery_settings.free_delivery_threshold:
-                total += delivery_settings.delivery_cost
 
         order.total_cost = total
         order.save()
@@ -305,17 +302,18 @@ def order_detail(request, id):
         return Response(serializer.data)
 
     if request.method == 'POST':
-        order.full_name = request.data.get('fullName', order.full_name)
-        order.email = request.data.get('email', order.email)
-        order.phone = request.data.get('phone', order.phone)
-        order.delivery_type = request.data.get('deliveryType', order.delivery_type)
-        order.payment_type = request.data.get('paymentType', order.payment_type)
-        order.city = request.data.get('city', order.city)
-        order.address = request.data.get('address', order.address)
-        order.comment = request.data.get('comment', order.comment)
-        order.status = request.data.get('status', order.status)
+        data = get_request_data(request)
+        order.full_name = data.get('fullName', order.full_name)
+        order.email = data.get('email', order.email)
+        order.phone = data.get('phone', order.phone)
+        order.delivery_type = data.get('deliveryType', order.delivery_type)
+        order.payment_type = data.get('paymentType', order.payment_type)
+        order.city = data.get('city', order.city)
+        order.address = data.get('address', order.address)
+        order.comment = data.get('comment', order.comment)
+        order.status = data.get('status', order.status)
         order.save()
-        return Response({'status': 'ok'})
+        return Response({'orderId': order.id})
 
 
 @api_view(['POST'])
@@ -325,8 +323,9 @@ def payment(request, id):
     except Order.DoesNotExist:
         return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    number = request.data.get('number', '')
-    if len(number) > 8:
+    data = get_request_data(request)
+    number = data.get('number', '')
+    if len(number) < 8:
         return Response({'error': 'Invalid number'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
@@ -370,10 +369,11 @@ def profile(request):
         })
 
     if request.method == 'POST':
-        profile_obj.full_name = request.data.get('fullName', profile_obj.full_name)
-        profile_obj.phone = request.data.get('phone', profile_obj.phone)
+        data = get_request_data(request)
+        profile_obj.full_name = data.get('fullName', profile_obj.full_name)
+        profile_obj.phone = data.get('phone', profile_obj.phone)
         profile_obj.save()
-        request.user.email = request.data.get('email', request.user.email)
+        request.user.email = data.get('email', request.user.email)
         request.user.save()
         return Response({
             'fullName': profile_obj.full_name,
@@ -387,8 +387,9 @@ def profile(request):
 def profile_password(request):
     if not request.user.is_authenticated:
         return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
-    current = request.data.get('currentPassword')
-    new = request.data.get('newPassword')
+    data = get_request_data(request)
+    current = data.get('currentPassword')
+    new = data.get('newPassword')
     if not request.user.check_password(current):
         return Response({'error': 'Wrong password'}, status=status.HTTP_400_BAD_REQUEST)
     request.user.set_password(new)

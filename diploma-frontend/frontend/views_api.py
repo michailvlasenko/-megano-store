@@ -27,10 +27,10 @@ def get_cart_items(user, session_key):
 
 def get_or_create_cart_item(user, session_key, product_id):
     if user.is_authenticated:
-        item, _ = Cart.objects.get_or_create(user=user, product_id=product_id)
+        item, created = Cart.objects.get_or_create(user=user, product_id=product_id)
     else:
-        item, _ = Cart.objects.get_or_create(session_key=session_key, product_id=product_id)
-    return item
+        item, created = Cart.objects.get_or_create(session_key=session_key, product_id=product_id)
+    return item, created
 
 
 def update_product_rating(product):
@@ -59,7 +59,7 @@ def sign_in(request):
     if user is not None:
         login(request, user)
         return Response({'status': 'ok'})
-    return Response({'error': 'Invalid credentials'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 @api_view(['POST'])
@@ -69,7 +69,7 @@ def sign_up(request):
     username = data.get('username')
     password = data.get('password')
     if User.objects.filter(username=username).exists():
-        return Response({'error': 'User already exists'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'error': 'User already exists'}, status=status.HTTP_409_CONFLICT)
     user = User.objects.create_user(username=username, password=password)
     Profile.objects.create(user=user, full_name=name)
     login(request, user)
@@ -222,14 +222,19 @@ def basket(request):
     count = data.get('count', 1)
 
     if request.method == 'POST':
-        item = get_or_create_cart_item(request.user, session_key, product_id)
-        item.count += count
+        count = max(count, 1)
+        item, created = get_or_create_cart_item(request.user, session_key, product_id)
+        if created:
+            item.count = count
+        else:
+            item.count += count
         item.save()
         items = get_cart_items(request.user, session_key)
         serializer = CartSerializer(items, many=True, context={'request': request})
         return Response(serializer.data)
 
     if request.method == 'DELETE':
+        count = max(count, 1)
         items = get_cart_items(request.user, session_key)
         item = items.filter(product_id=product_id).first()
         if item:
@@ -290,11 +295,20 @@ def orders(request):
         return Response({'orderId': order.id})
 
 
-@api_view(['GET', 'POST'])
-def order_detail(request, id):
+def get_order_or_404(request, id):
     try:
         order = Order.objects.get(id=id)
     except Order.DoesNotExist:
+        return None
+    if request.user.is_authenticated and order.user is not None and order.user != request.user:
+        return None
+    return order
+
+
+@api_view(['GET', 'POST'])
+def order_detail(request, id):
+    order = get_order_or_404(request, id)
+    if order is None:
         return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
@@ -311,16 +325,14 @@ def order_detail(request, id):
         order.city = data.get('city', order.city)
         order.address = data.get('address', order.address)
         order.comment = data.get('comment', order.comment)
-        order.status = data.get('status', order.status)
         order.save()
         return Response({'orderId': order.id})
 
 
 @api_view(['POST'])
 def payment(request, id):
-    try:
-        order = Order.objects.get(id=id)
-    except Order.DoesNotExist:
+    order = get_order_or_404(request, id)
+    if order is None:
         return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
 
     data = get_request_data(request)

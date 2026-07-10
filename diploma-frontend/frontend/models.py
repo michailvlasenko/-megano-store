@@ -105,7 +105,7 @@ class Sale(models.Model):
 
 class Banner(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='banners')
-    image = models.ImageField(upload_to='banners/')
+    image = models.ImageField(upload_to='banners/', blank=True, null=True)
     alt = models.CharField(max_length=255, blank=True)
 
     def __str__(self):

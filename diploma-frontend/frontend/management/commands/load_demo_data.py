@@ -1,5 +1,8 @@
+import os
 from django.core.management.base import BaseCommand
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.files import File
 from django.utils import timezone
 from frontend.models import (
     Category, Product, ProductImage, Tag, ProductTag,
@@ -149,6 +152,18 @@ class Command(BaseCommand):
 
             if i < 3:
                 Banner.objects.create(product=product)
+
+            product_num = i + 1
+            for img_num in range(1, 4):
+                filename = f"{product_num}{img_num}.webp"
+                filepath = os.path.join(settings.MEDIA_ROOT, 'products', filename)
+                if os.path.exists(filepath):
+                    with open(filepath, 'rb') as f:
+                        ProductImage.objects.create(
+                            product=product,
+                            alt=f"{product.title} image {img_num}",
+                            image=File(f, name=filename),
+                        )
 
             self.stdout.write(f'  Created product: {product.title}')
 

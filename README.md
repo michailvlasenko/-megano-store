@@ -71,14 +71,15 @@ python manage.py runserver
 
 ```
 python_django_diploma/
-├── main/                 # Настройки Django-проекта
-├── diploma-frontend/     # Frontend-приложение (интерфейс)
+├── main/                 # Настройки Django-проекта + бэкенд
+│   ├── models.py         # Модели данных
+│   ├── views_api.py      # API-эндпоинты
+│   ├── serializers.py
+│   ├── api_urls.py
+│   ├── admin.py
+│   └── management/       # Команды (load_demo_data)
+├── diploma-frontend/     # Frontend-приложение (шаблоны, статика)
 │   └── frontend/
-│       ├── models.py     # Модели данных
-│       ├── views_api.py  # API-эндпоинты
-│       ├── serializers.py
-│       ├── api_urls.py
-│       └── management/   # Команды (load_demo_data)
 ├── static/               # Статика (CSS, JS, изображения)
 ├── media/                # Загружаемые файлы (изображения товаров)
 ├── manage.py

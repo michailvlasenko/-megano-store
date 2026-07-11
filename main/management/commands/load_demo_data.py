@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files import File
 from django.utils import timezone
-from frontend.models import (
+from main.models import (
     Category, Product, ProductImage, Tag, ProductTag,
     ProductSpecification, Review, Sale, Banner, Profile, DeliverySettings
 )

@@ -7,13 +7,10 @@ diploma_frontend.egg-info/SOURCES.txt
 diploma_frontend.egg-info/dependency_links.txt
 diploma_frontend.egg-info/top_level.txt
 frontend/__init__.py
-frontend/admin.py
 frontend/apps.py
-frontend/models.py
 frontend/tests.py
 frontend/urls.py
 frontend/views.py
-frontend/migrations/__init__.py
 frontend/static/frontend/favicon.ico
 frontend/static/frontend/assets/css/basic.css
 frontend/static/frontend/assets/css/extra.css

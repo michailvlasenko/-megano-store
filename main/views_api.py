@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.cache import cache_page
 from django.contrib.auth.models import User
 from django.db.models import Q, Count, Sum, F, Value
 from django.db.models.functions import Coalesce
@@ -93,6 +94,7 @@ def sign_out(request):
 
 
 @api_view(['GET'])
+@cache_page(60 * 30)
 def categories(request):
     cats = Category.objects.filter(parent__isnull=True)
     serializer = CategorySerializer(cats, many=True, context={'request': request})
@@ -148,6 +150,7 @@ def catalog(request):
 
 
 @api_view(['GET'])
+@cache_page(60 * 10)
 def products_popular(request):
     products = Product.objects.all().order_by('-sort_index', '-rating')[:8]
     serializer = ProductShortSerializer(products, many=True, context={'request': request})
@@ -180,6 +183,7 @@ def sales(request):
 
 
 @api_view(['GET'])
+@cache_page(60 * 30)
 def banners(request):
     banners_qs = Banner.objects.all()
     serializer = ProductShortSerializer(

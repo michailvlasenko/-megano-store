@@ -17,6 +17,7 @@ from decimal import Decimal
 from django.db.models import Avg
 from django.utils import timezone
 from .serializers import TagSerializer
+from .validators import validate_email, validate_phone, validate_password, validate_required
 
 
 def get_cart_items(user, session_key):
@@ -68,8 +69,17 @@ def sign_up(request):
     name = data.get('name')
     username = data.get('username')
     password = data.get('password')
+
+    errors = {}
+    if not validate_email(username):
+        errors['username'] = 'Укажите корректный email'
+    if not validate_password(password):
+        errors['password'] = 'Пароль должен быть минимум 6 символов'
+    if errors:
+        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
     if User.objects.filter(username=username).exists():
-        return Response({'error': 'User already exists'}, status=status.HTTP_409_CONFLICT)
+        return Response({'error': 'Пользователь с таким email уже существует'}, status=status.HTTP_409_CONFLICT)
     user = User.objects.create_user(username=username, password=password)
     Profile.objects.create(user=user, full_name=name)
     login(request, user)
@@ -317,6 +327,17 @@ def order_detail(request, id):
 
     if request.method == 'POST':
         data = get_request_data(request)
+
+        errors = {}
+        if not validate_required(data.get('fullName')):
+            errors['fullName'] = 'Укажите ФИО'
+        if not validate_email(data.get('email')):
+            errors['email'] = 'Укажите корректный email'
+        if not validate_phone(data.get('phone')):
+            errors['phone'] = 'Укажите корректный телефон'
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
         order.full_name = data.get('fullName', order.full_name)
         order.email = data.get('email', order.email)
         order.phone = data.get('phone', order.phone)
@@ -382,10 +403,30 @@ def profile(request):
 
     if request.method == 'POST':
         data = get_request_data(request)
+
+        errors = {}
+        email = data.get('email', '').strip()
+        phone = data.get('phone', '').strip()
+
+        if email and email != request.user.email:
+            if not validate_email(email):
+                errors['email'] = 'Укажите корректный email'
+            elif User.objects.filter(email=email).exclude(id=request.user.id).exists():
+                errors['email'] = 'Email уже используется'
+
+        if phone and phone != profile_obj.phone:
+            if not validate_phone(phone):
+                errors['phone'] = 'Укажите корректный телефон'
+            elif Profile.objects.filter(phone=phone).exclude(user=request.user).exists():
+                errors['phone'] = 'Телефон уже используется'
+
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
         profile_obj.full_name = data.get('fullName', profile_obj.full_name)
-        profile_obj.phone = data.get('phone', profile_obj.phone)
+        profile_obj.phone = phone or profile_obj.phone
         profile_obj.save()
-        request.user.email = data.get('email', request.user.email)
+        request.user.email = email or request.user.email
         request.user.save()
         return Response({
             'fullName': profile_obj.full_name,

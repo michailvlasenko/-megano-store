@@ -3,6 +3,7 @@ from django.views.decorators.cache import cache_page
 from django.contrib.auth.models import User
 from django.db.models import Q, Count, Sum, F, Value
 from django.db.models.functions import Coalesce
+from django.db import IntegrityError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -72,8 +73,8 @@ def sign_up(request):
     password = data.get('password')
 
     errors = {}
-    if not validate_email(username):
-        errors['username'] = 'Укажите корректный email'
+    if not username:
+        errors['username'] = 'Укажите логин'
     if not validate_password(password):
         errors['password'] = 'Пароль должен быть минимум 6 символов'
     if errors:
@@ -110,9 +111,21 @@ def catalog(request):
             filter_obj = json.loads(filter_data)
         except (json.JSONDecodeError, TypeError):
             filter_obj = {'name': filter_data}
-        name = filter_obj.get('name', '')
-        if name:
-            products = products.filter(title__icontains=name)
+    else:
+        filter_obj = {}
+        filter_name = request.query_params.get('filter[name]')
+        if filter_name:
+            filter_obj['name'] = filter_name
+    name = filter_obj.get('name', '')
+    if name:
+        products = products.filter(title__icontains=name)
+
+    min_price = filter_obj.get('minPrice') or request.query_params.get('filter[minPrice]')
+    max_price = filter_obj.get('maxPrice') or request.query_params.get('filter[maxPrice]')
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
 
     category = request.query_params.get('category')
     if category:
@@ -237,7 +250,10 @@ def basket(request):
 
     if request.method == 'POST':
         count = max(count, 1)
-        item, created = get_or_create_cart_item(request.user, session_key, product_id)
+        try:
+            item, created = get_or_create_cart_item(request.user, session_key, product_id)
+        except IntegrityError:
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
         if created:
             item.count = count
         else:
@@ -278,11 +294,12 @@ def orders(request):
         if not cart_items.exists():
             return Response({'error': 'Cart is empty'}, status=status.HTTP_400_BAD_REQUEST)
 
+        user = request.user if request.user.is_authenticated else None
         order = Order.objects.create(
-            user=request.user if request.user.is_authenticated else None,
-            full_name='',
-            email='',
-            phone='',
+            user=user,
+            full_name=str(user.username) if user else '',
+            email=user.email if user and user.email else '',
+            phone='+70000000000',
             delivery_type='free',
             payment_type='online_card',
             city='',
@@ -335,9 +352,9 @@ def order_detail(request, id):
         errors = {}
         if not validate_required(data.get('fullName')):
             errors['fullName'] = 'Укажите ФИО'
-        if not validate_email(data.get('email')):
+        if not validate_required(data.get('email')):
             errors['email'] = 'Укажите корректный email'
-        if not validate_phone(data.get('phone')):
+        if data.get('phone') and not validate_phone(data.get('phone')):
             errors['phone'] = 'Укажите корректный телефон'
         if errors:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)

@@ -158,12 +158,11 @@ class Command(BaseCommand):
                 filename = f"{product_num}{img_num}.webp"
                 filepath = os.path.join(settings.MEDIA_ROOT, 'products', filename)
                 if os.path.exists(filepath):
-                    with open(filepath, 'rb') as f:
-                        ProductImage.objects.create(
-                            product=product,
-                            alt=f"{product.title} image {img_num}",
-                            image=File(f, name=filename),
-                        )
+                    ProductImage.objects.create(
+                        product=product,
+                        alt=f"{product.title} image {img_num}",
+                        image=f"products/{filename}",
+                    )
 
             self.stdout.write(f'  Created product: {product.title}')
 

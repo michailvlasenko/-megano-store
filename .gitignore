@@ -3,7 +3,9 @@ venv/
 __pycache__/
 db.sqlite3
 static/
-media/
+media/avatars/
+media/categories/
+media/banners/
 dist/
 *.egg-info/
 .DS_Store

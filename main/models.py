@@ -1,9 +1,49 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
-class Profile(models.Model):
+class SoftDeleteQuerySet(models.QuerySet):
+    def delete(self):
+        self.update(is_deleted=True, deleted_at=timezone.now())
+
+    def hard_delete(self):
+        super().delete()
+
+
+class SoftDeleteManager(models.Manager):
+    def __init__(self, with_deleted=False, *args, **kwargs):
+        self.with_deleted = with_deleted
+        super().__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        qs = SoftDeleteQuerySet(self.model, using=self._db)
+        if not self.with_deleted:
+            qs = qs.filter(is_deleted=False)
+        return qs
+
+
+class SoftDeleteMixin(models.Model):
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    objects_with_deleted = SoftDeleteManager(with_deleted=True)
+
+    class Meta:
+        abstract = True
+
+    def delete(self, using=None, keep_parents=False):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(using=using)
+
+    def hard_delete(self, using=None, keep_parents=False):
+        super().delete(using=using, keep_parents=keep_parents)
+
+
+class Profile(SoftDeleteMixin):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     full_name = models.CharField(max_length=255, blank=True)
     phone = models.CharField(max_length=20, blank=True, unique=True, null=True)
@@ -13,7 +53,7 @@ class Profile(models.Model):
         return self.full_name or self.user.username
 
 
-class Category(models.Model):
+class Category(SoftDeleteMixin):
     title = models.CharField(max_length=255)
     image = models.ImageField(upload_to='categories/', blank=True, null=True)
     image_alt = models.CharField(max_length=255, blank=True)
@@ -26,7 +66,7 @@ class Category(models.Model):
         return self.title
 
 
-class Product(models.Model):
+class Product(SoftDeleteMixin):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -79,7 +119,7 @@ class ProductSpecification(models.Model):
         return f"{self.name}: {self.value}"
 
 
-class Review(models.Model):
+class Review(SoftDeleteMixin):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     author = models.CharField(max_length=255)
     email = models.EmailField()
@@ -123,7 +163,7 @@ class Cart(models.Model):
         return f"{self.product.title} x {self.count}"
 
 
-class Order(models.Model):
+class Order(SoftDeleteMixin):
     STATUS_CHOICES = [
         ('accepted', 'Accepted'),
         ('paid', 'Paid'),

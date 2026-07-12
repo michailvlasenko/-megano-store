@@ -110,7 +110,18 @@ class StoreAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
-    def test_10_profile_auth_required(self):
+    def test_10_soft_delete_product(self):
+        """Проверка, что delete() не удаляет физически, а ставит is_deleted=True"""
+        from django.utils import timezone
+        pid = self.product.id
+        self.product.delete()
+        self.product.refresh_from_db()
+        self.assertTrue(self.product.is_deleted)
+        self.assertIsNotNone(self.product.deleted_at)
+        self.assertFalse(Product.objects.filter(id=pid).exists())
+        self.assertTrue(Product.objects_with_deleted.filter(id=pid).exists())
+
+    def test_11_profile_auth_required(self):
         response = self.client.get('/api/profile')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 

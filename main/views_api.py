@@ -75,6 +75,8 @@ def sign_up(request):
     errors = {}
     if not username:
         errors['username'] = 'Укажите логин'
+    elif not validate_email(username):
+        errors['username'] = 'Укажите корректный email'
     if not validate_password(password):
         errors['password'] = 'Пароль должен быть минимум 6 символов'
     if errors:
@@ -104,7 +106,7 @@ def categories(request):
 
 @api_view(['GET'])
 def catalog(request):
-    products = Product.objects.all()
+    products = Product.objects.all().filter(is_deleted=False)
     filter_data = request.query_params.get('filter')
     if filter_data:
         try:
@@ -165,14 +167,14 @@ def catalog(request):
 @api_view(['GET'])
 @cache_page(60 * 10)
 def products_popular(request):
-    products = Product.objects.all().order_by('-sort_index', '-rating')[:8]
+    products = Product.objects.all().filter(is_deleted=False).order_by('-sort_index', '-rating')[:8]
     serializer = ProductShortSerializer(products, many=True, context={'request': request})
     return Response(serializer.data)
 
 
 @api_view(['GET'])
 def products_limited(request):
-    products = Product.objects.filter(limited_edition=True)[:16]
+    products = Product.objects.filter(is_deleted=False, limited_edition=True)[:16]
     serializer = ProductShortSerializer(products, many=True, context={'request': request})
     return Response(serializer.data)
 
@@ -180,7 +182,7 @@ def products_limited(request):
 @api_view(['GET'])
 def sales(request):
     now = timezone.now().date()
-    sales_qs = Sale.objects.filter(date_from__lte=now, date_to__gte=now)
+    sales_qs = Sale.objects.filter(date_from__lte=now, date_to__gte=now, product__is_deleted=False)
     page = int(request.query_params.get('currentPage', 1))
     limit = 20
     start = (page - 1) * limit
@@ -198,7 +200,7 @@ def sales(request):
 @api_view(['GET'])
 @cache_page(60 * 30)
 def banners(request):
-    banners_qs = Banner.objects.all()
+    banners_qs = Banner.objects.filter(product__is_deleted=False)
     serializer = ProductShortSerializer(
         [b.product for b in banners_qs.select_related('product')],
         many=True, context={'request': request}
@@ -412,7 +414,7 @@ def profile(request):
     if not request.user.is_authenticated:
         return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    profile_obj, _ = Profile.objects.get_or_create(user=request.user)
+    profile_obj, _ = Profile.objects_with_deleted.get_or_create(user=request.user)
 
     if request.method == 'GET':
         return Response({
@@ -438,7 +440,7 @@ def profile(request):
         if phone and phone != profile_obj.phone:
             if not validate_phone(phone):
                 errors['phone'] = 'Укажите корректный телефон'
-            elif Profile.objects.filter(phone=phone).exclude(user=request.user).exists():
+            elif Profile.objects_with_deleted.filter(phone=phone).exclude(user=request.user).exists():
                 errors['phone'] = 'Телефон уже используется'
 
         if errors:
@@ -475,7 +477,7 @@ def profile_password(request):
 def profile_avatar(request):
     if not request.user.is_authenticated:
         return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
-    profile_obj, _ = Profile.objects.get_or_create(user=request.user)
+    profile_obj, _ = Profile.objects_with_deleted.get_or_create(user=request.user)
     if 'avatar' in request.FILES:
         profile_obj.avatar = request.FILES['avatar']
         profile_obj.save()

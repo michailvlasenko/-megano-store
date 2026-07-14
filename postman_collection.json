@@ -1,0 +1,232 @@
+{
+    "info": {
+        "name": "Megano Store API",
+        "description": "Для импорта в Postman. CSRF: перед POST/PUT/DELETE получите токен через GET /api/categories и установите заголовок X-CSRFToken",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:8000",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "POST Sign In",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/sign-in", "host": ["{{base_url}}"], "path": ["api", "sign-in"]},
+                "body": {"mode": "raw", "raw": "{\n  \"username\": \"user@example.com\",\n  \"password\": \"password\"\n}"}
+            }
+        },
+        {
+            "name": "POST Sign Up",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/sign-up", "host": ["{{base_url}}"], "path": ["api", "sign-up"]},
+                "body": {"mode": "raw", "raw": "{\n  \"name\": \"John Doe\",\n  \"username\": \"new@example.com\",\n  \"password\": \"password123\"\n}"}
+            }
+        },
+        {
+            "name": "POST Sign Out",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/sign-out", "host": ["{{base_url}}"], "path": ["api", "sign-out"]}
+            }
+        },
+        {
+            "name": "GET Categories",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/categories", "host": ["{{base_url}}"], "path": ["api", "categories"]}
+            }
+        },
+        {
+            "name": "GET Catalog",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {
+                    "raw": "{{base_url}}/api/catalog?filter[name]=&filter[minPrice]=&filter[maxPrice]=&category=&sort=date&sortType=dec&currentPage=1&limit=20",
+                    "host": ["{{base_url}}"],
+                    "path": ["api", "catalog"],
+                    "query": [
+                        {"key": "filter[name]", "value": ""},
+                        {"key": "filter[minPrice]", "value": ""},
+                        {"key": "filter[maxPrice]", "value": ""},
+                        {"key": "category", "value": ""},
+                        {"key": "sort", "value": "date"},
+                        {"key": "sortType", "value": "dec"},
+                        {"key": "currentPage", "value": "1"},
+                        {"key": "limit", "value": "20"}
+                    ]
+                }
+            }
+        },
+        {
+            "name": "GET Products Popular",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/products/popular", "host": ["{{base_url}}"], "path": ["api", "products", "popular"]}
+            }
+        },
+        {
+            "name": "GET Products Limited",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/products/limited", "host": ["{{base_url}}"], "path": ["api", "products", "limited"]}
+            }
+        },
+        {
+            "name": "GET Sales",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/sales?currentPage=1", "host": ["{{base_url}}"], "path": ["api", "sales"], "query": [{"key": "currentPage", "value": "1"}]}
+            }
+        },
+        {
+            "name": "GET Banners",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/banners", "host": ["{{base_url}}"], "path": ["api", "banners"]}
+            }
+        },
+        {
+            "name": "GET Product Detail",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/product/1", "host": ["{{base_url}}"], "path": ["api", "product", "1"]}
+            }
+        },
+        {
+            "name": "POST Product Review",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/product/1/review", "host": ["{{base_url}}"], "path": ["api", "product", "1", "review"]},
+                "body": {"mode": "raw", "raw": "{\n  \"author\": \"John\",\n  \"email\": \"john@example.com\",\n  \"text\": \"Good product\",\n  \"rate\": 5\n}"}
+            }
+        },
+        {
+            "name": "GET Basket",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/basket", "host": ["{{base_url}}"], "path": ["api", "basket"]}
+            }
+        },
+        {
+            "name": "POST Basket",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/basket", "host": ["{{base_url}}"], "path": ["api", "basket"]},
+                "body": {"mode": "raw", "raw": "{\n  \"id\": 1,\n  \"count\": 2\n}"}
+            }
+        },
+        {
+            "name": "DELETE Basket",
+            "request": {
+                "method": "DELETE",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/basket", "host": ["{{base_url}}"], "path": ["api", "basket"]},
+                "body": {"mode": "raw", "raw": "{\n  \"id\": 1,\n  \"count\": 1\n}"}
+            }
+        },
+        {
+            "name": "GET Orders",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"]}
+            }
+        },
+        {
+            "name": "POST Orders",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/orders", "host": ["{{base_url}}"], "path": ["api", "orders"]}
+            }
+        },
+        {
+            "name": "GET Order Detail",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/orders/1", "host": ["{{base_url}}"], "path": ["api", "orders", "1"]}
+            }
+        },
+        {
+            "name": "POST Order Update",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/orders/1", "host": ["{{base_url}}"], "path": ["api", "orders", "1"]},
+                "body": {"mode": "raw", "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+71234567890\",\n  \"deliveryType\": \"free\",\n  \"paymentType\": \"online_card\",\n  \"city\": \"Moscow\",\n  \"address\": \"Lenina 1\"\n}"}
+            }
+        },
+        {
+            "name": "POST Payment",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/payment/1", "host": ["{{base_url}}"], "path": ["api", "payment", "1"]},
+                "body": {"mode": "raw", "raw": "{\n  \"number\": \"12345678\"\n}"}
+            }
+        },
+        {
+            "name": "GET Profile",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"]}
+            }
+        },
+        {
+            "name": "POST Profile",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"]},
+                "body": {"mode": "raw", "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+71234567890\"\n}"}
+            }
+        },
+        {
+            "name": "POST Profile Password",
+            "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/profile/password", "host": ["{{base_url}}"], "path": ["api", "profile", "password"]},
+                "body": {"mode": "raw", "raw": "{\n  \"currentPassword\": \"oldpass\",\n  \"newPassword\": \"newpass\"\n}"}
+            }
+        },
+        {
+            "name": "POST Profile Avatar",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "url": {"raw": "{{base_url}}/api/profile/avatar", "host": ["{{base_url}}"], "path": ["api", "profile", "avatar"]},
+                "body": {"mode": "formdata", "formdata": [{"key": "avatar", "type": "file", "src": ""}]}
+            }
+        },
+        {
+            "name": "GET Tags",
+            "request": {
+                "method": "GET",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "url": {"raw": "{{base_url}}/api/tags", "host": ["{{base_url}}"], "path": ["api", "tags"]}
+            }
+        }
+    ]
+}
